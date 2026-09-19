@@ -126,3 +126,11 @@ describe('list query schemas', () => {
     expect(adminListQuotesQuerySchema.safeParse({ userId: 'nope' }).success).toBe(false);
   });
 });
+
+describe('monthly consumption', () => {
+  it('rejects a fractional number of kilowatt hours', () => {
+    const result = createQuoteSchema.safeParse({ ...validQuote, monthlyConsumptionKwh: 450.5 });
+    expect(result.success).toBe(false);
+    expect(errorFor(result)).toContain('monthlyConsumptionKwh');
+  });
+});

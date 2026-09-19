@@ -52,6 +52,7 @@ export const createQuoteSchema = z
       blankToUndefined,
       z.coerce
         .number('Monthly consumption must be a number')
+        .int('Monthly consumption must be a whole number of kWh')
         .min(INPUT_LIMITS.monthlyConsumptionKwh.min, 'Monthly consumption must be at least 1 kWh')
         .max(INPUT_LIMITS.monthlyConsumptionKwh.max, 'Monthly consumption looks too high'),
     ),

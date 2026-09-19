@@ -1,0 +1,88 @@
+// Datasource credentials come from the environment via prisma7.config.ts.
+// See ../../README.md for the local development setup.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum RiskBand {
+  A
+  B
+  C
+}
+
+model User {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  email        String   @unique
+  fullName     String   @map("full_name")
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  quotes Quote[]
+
+  @@map("users")
+}
+
+/// A pre-qualification request together with the result computed for it.
+///
+/// Inputs are stored exactly as submitted and derived values are stored
+/// alongside them, so a quote can always be shown as it was issued even after
+/// the pricing rules change. `pricingVersion` records which rules applied.
+///
+/// Every monetary column is an integer count of cents and the system size is an
+/// integer count of watts. The database holds no floating point money.
+model Quote {
+  id     String @id @default(uuid(7)) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName              String @map("full_name")
+  email                 String
+  address               String
+  monthlyConsumptionKwh Int    @map("monthly_consumption_kwh")
+  systemSizeWatts       Int    @map("system_size_watts")
+
+  downPaymentCents Int      @map("down_payment_cents")
+  systemPriceCents Int      @map("system_price_cents")
+  principalCents   Int      @map("principal_cents")
+  riskBand         RiskBand @map("risk_band")
+  /// Annual percentage rate in basis points, so 6.9% is stored as 690.
+  aprBps           Int      @map("apr_bps")
+  pricingVersion   String   @map("pricing_version")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  offers QuoteOffer[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@map("quotes")
+}
+
+model QuoteOffer {
+  id      String @id @default(uuid(7)) @db.Uuid
+  quoteId String @map("quote_id") @db.Uuid
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  termYears           Int @map("term_years")
+  aprBps              Int @map("apr_bps")
+  principalCents      Int @map("principal_cents")
+  monthlyPaymentCents Int @map("monthly_payment_cents")
+  totalPaidCents      Int @map("total_paid_cents")
+
+  @@unique([quoteId, termYears])
+  @@map("quote_offers")
+}
