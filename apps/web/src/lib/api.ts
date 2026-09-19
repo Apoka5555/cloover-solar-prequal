@@ -1,8 +1,7 @@
 import 'server-only';
 import type { ApiErrorDto } from '@cloover/contracts';
 import { cookies } from 'next/headers';
-
-const API_BASE_URL = process.env.API_INTERNAL_URL ?? 'http://localhost:3001';
+import { apiBaseUrl } from './api-url';
 
 export class ApiError extends Error {
   constructor(
@@ -24,7 +23,7 @@ export class ApiError extends Error {
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const cookieStore = await cookies();
 
-  const response = await fetch(`${API_BASE_URL}/api${path}`, {
+  const response = await fetch(`${apiBaseUrl()}/api${path}`, {
     ...init,
     headers: {
       'content-type': 'application/json',
