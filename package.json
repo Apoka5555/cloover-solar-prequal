@@ -1,0 +1,25 @@
+{
+  "name": "cloover-solar-prequal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Residential solar financing pre-qualification: quote engine, API and web app.",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.3.4",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md,yaml,yml}\"",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:unit": "pnpm -r test:unit",
+    "test:e2e": "pnpm --filter @cloover/api test:e2e"
+  },
+  "devDependencies": {
+    "prettier": "3.9.8",
+    "typescript": "6.0.3"
+  }
+}
