@@ -21,7 +21,10 @@ export const envSchema = z.object({
 
   JWT_SECRET: z
     .string()
-    .min(32, 'JWT_SECRET must be at least 32 characters; generate one with `openssl rand -base64 48`'),
+    .min(
+      32,
+      'JWT_SECRET must be at least 32 characters; generate one with `openssl rand -base64 48`',
+    ),
   JWT_EXPIRES_IN: z.string().default('1d'),
 
   COOKIE_SECURE: booleanish.default(false),

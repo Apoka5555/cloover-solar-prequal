@@ -1,5 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { createTestContext, registerUser, VALID_QUOTE, type TestContext, type TestUser } from './test-app.js';
+import {
+  createTestContext,
+  registerUser,
+  VALID_QUOTE,
+  type TestContext,
+  type TestUser,
+} from './test-app.js';
 
 describe('quotes', () => {
   let context: TestContext;
@@ -14,7 +20,10 @@ describe('quotes', () => {
   beforeEach(async () => {
     await context.reset();
     owner = await registerUser(context, { email: 'owner@test.com', fullName: 'Olive Owner' });
-    stranger = await registerUser(context, { email: 'stranger@test.com', fullName: 'Stan Stranger' });
+    stranger = await registerUser(context, {
+      email: 'stranger@test.com',
+      fullName: 'Stan Stranger',
+    });
     admin = await registerUser(context, {
       email: 'admin@test.com',
       fullName: 'Ada Admin',
@@ -171,11 +180,7 @@ describe('quotes', () => {
     });
 
     it('rejects a page size beyond the cap', async () => {
-      await context
-        .http()
-        .get('/api/quotes?pageSize=1000')
-        .set('Cookie', owner.cookie)
-        .expect(400);
+      await context.http().get('/api/quotes?pageSize=1000').set('Cookie', owner.cookie).expect(400);
     });
   });
 

@@ -22,13 +22,20 @@
     {
       "files": ["apps/api/**/*.ts"],
       "rules": {
-        "typescript/no-extraneous-class": ["error", { "allowWithDecorator": true }]
+        "typescript/no-extraneous-class": [
+          "error",
+          {
+            "allowWithDecorator": true
+          }
+        ]
       }
     },
     {
       "files": ["packages/contracts/**/*.ts", "apps/web/**/*.ts", "apps/web/**/*.tsx"],
       "rules": {
-        "typescript/consistent-type-imports": "error"
+        "typescript/consistent-type-imports": "error",
+        "react/react-in-jsx-scope": "off",
+        "import/no-unassigned-import": "off"
       }
     },
     {

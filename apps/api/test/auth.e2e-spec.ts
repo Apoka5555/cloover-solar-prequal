@@ -1,5 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { createTestContext, extractSessionCookie, registerUser, type TestContext } from './test-app.js';
+import {
+  createTestContext,
+  extractSessionCookie,
+  registerUser,
+  type TestContext,
+} from './test-app.js';
 
 describe('authentication', () => {
   let context: TestContext;
@@ -140,11 +145,7 @@ describe('authentication', () => {
     it('rejects a tampered token', async () => {
       const user = await registerUser(context, { email: 'ada@example.com' });
 
-      await context
-        .http()
-        .get('/api/auth/me')
-        .set('Cookie', `${user.cookie}tampered`)
-        .expect(401);
+      await context.http().get('/api/auth/me').set('Cookie', `${user.cookie}tampered`).expect(401);
     });
 
     it('stops accepting a session after the account is deleted', async () => {

@@ -1,1 +1,51 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+@theme {
+  --color-brand-50: oklch(0.97 0.02 165);
+  --color-brand-100: oklch(0.94 0.04 165);
+  --color-brand-200: oklch(0.88 0.07 165);
+  --color-brand-500: oklch(0.62 0.12 165);
+  --color-brand-600: oklch(0.54 0.11 165);
+  --color-brand-700: oklch(0.45 0.09 165);
+  --color-brand-900: oklch(0.29 0.06 165);
+
+  --color-surface: oklch(1 0 0);
+  --color-canvas: oklch(0.98 0.005 165);
+  --color-ink: oklch(0.24 0.01 250);
+  --color-ink-muted: oklch(0.48 0.012 250);
+  --color-line: oklch(0.9 0.008 250);
+
+  --color-danger-50: oklch(0.97 0.02 25);
+  --color-danger-600: oklch(0.55 0.19 25);
+  --color-danger-700: oklch(0.46 0.17 25);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* A visible focus ring on every interactive element, including when the
+     browser would normally suppress it for mouse users. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Visible only to assistive technology, and to sighted keyboard users once
+     focused. Used by the skip link. */
+  .sr-only-focusable:not(:focus) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

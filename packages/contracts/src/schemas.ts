@@ -7,8 +7,7 @@ import { eurosToCents } from './money.js';
  * JSON clients, so every numeric field is coerced once, here, rather than in
  * each caller. An empty control is treated as "not provided".
  */
-const blankToUndefined = (value: unknown) =>
-  value === '' || value === null ? undefined : value;
+const blankToUndefined = (value: unknown) => (value === '' || value === null ? undefined : value);
 
 const trimmedString = z.string().trim();
 
@@ -21,7 +20,10 @@ export const emailSchema = z
 
 export const passwordSchema = z
   .string()
-  .min(INPUT_LIMITS.password.min, `Password must be at least ${INPUT_LIMITS.password.min} characters`)
+  .min(
+    INPUT_LIMITS.password.min,
+    `Password must be at least ${INPUT_LIMITS.password.min} characters`,
+  )
   .max(INPUT_LIMITS.password.max, 'Password is too long');
 
 export const fullNameSchema = trimmedString
@@ -52,37 +54,44 @@ export const createQuoteSchema = z
         description: 'Installation address',
         examples: ['Hauptstrasse 1, 10115 Berlin'],
       }),
-    monthlyConsumptionKwh: z.preprocess(
-      blankToUndefined,
-      z.coerce
-        .number('Monthly consumption must be a number')
-        .int('Monthly consumption must be a whole number of kWh')
-        .min(INPUT_LIMITS.monthlyConsumptionKwh.min, 'Monthly consumption must be at least 1 kWh')
-        .max(INPUT_LIMITS.monthlyConsumptionKwh.max, 'Monthly consumption looks too high'),
-    ).meta({
-      description: 'Household electricity use per month, in whole kilowatt hours',
-      examples: [450],
-    }),
-    systemSizeKw: z.preprocess(
-      blankToUndefined,
-      z.coerce
-        .number('System size must be a number')
-        .min(INPUT_LIMITS.systemSizeKw.min, 'System size must be at least 0.1 kW')
-        .max(INPUT_LIMITS.systemSizeKw.max, 'System size must be 100 kW or less'),
-    ).meta({
-      description: 'Peak capacity of the proposed array, in kilowatts',
-      examples: [6],
-    }),
-    downPayment: z.preprocess(
-      blankToUndefined,
-      z.coerce
-        .number('Down payment must be a number')
-        .min(INPUT_LIMITS.downPayment.min, 'Down payment cannot be negative')
-        .optional(),
-    ).meta({
-      description: 'Cash paid upfront in euros. Defaults to zero and may not exceed the system price',
-      examples: [1200],
-    }),
+    monthlyConsumptionKwh: z
+      .preprocess(
+        blankToUndefined,
+        z.coerce
+          .number('Monthly consumption must be a number')
+          .int('Monthly consumption must be a whole number of kWh')
+          .min(INPUT_LIMITS.monthlyConsumptionKwh.min, 'Monthly consumption must be at least 1 kWh')
+          .max(INPUT_LIMITS.monthlyConsumptionKwh.max, 'Monthly consumption looks too high'),
+      )
+      .meta({
+        description: 'Household electricity use per month, in whole kilowatt hours',
+        examples: [450],
+      }),
+    systemSizeKw: z
+      .preprocess(
+        blankToUndefined,
+        z.coerce
+          .number('System size must be a number')
+          .min(INPUT_LIMITS.systemSizeKw.min, 'System size must be at least 0.1 kW')
+          .max(INPUT_LIMITS.systemSizeKw.max, 'System size must be 100 kW or less'),
+      )
+      .meta({
+        description: 'Peak capacity of the proposed array, in kilowatts',
+        examples: [6],
+      }),
+    downPayment: z
+      .preprocess(
+        blankToUndefined,
+        z.coerce
+          .number('Down payment must be a number')
+          .min(INPUT_LIMITS.downPayment.min, 'Down payment cannot be negative')
+          .optional(),
+      )
+      .meta({
+        description:
+          'Cash paid upfront in euros. Defaults to zero and may not exceed the system price',
+        examples: [1200],
+      }),
   })
   .refine(
     (value) =>
@@ -97,10 +106,7 @@ export const createQuoteSchema = z
 export type CreateQuoteInput = z.input<typeof createQuoteSchema>;
 export type CreateQuotePayload = z.output<typeof createQuoteSchema>;
 
-const pageSchema = z.preprocess(
-  blankToUndefined,
-  z.coerce.number().int().min(1).default(1),
-);
+const pageSchema = z.preprocess(blankToUndefined, z.coerce.number().int().min(1).default(1));
 const pageSizeSchema = z.preprocess(
   blankToUndefined,
   z.coerce.number().int().min(1).max(100).default(20),

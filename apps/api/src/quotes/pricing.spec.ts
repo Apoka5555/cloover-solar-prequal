@@ -40,12 +40,9 @@ describe('monthlyPaymentCents', () => {
     [600_000, 690, 15, 5_359],
     [720_000, 890, 10, 9_082],
     [1_200_000, 1_190, 15, 14_325],
-  ])(
-    'amortises %i cents at %i bps over %i years',
-    (principal, aprBps, termYears, expected) => {
-      expect(monthlyPaymentCents(principal, aprBps, termYears)).toBe(expected);
-    },
-  );
+  ])('amortises %i cents at %i bps over %i years', (principal, aprBps, termYears, expected) => {
+    expect(monthlyPaymentCents(principal, aprBps, termYears)).toBe(expected);
+  });
 
   it('charges nothing when the system is fully prepaid', () => {
     expect(monthlyPaymentCents(0, 690, 5)).toBe(0);

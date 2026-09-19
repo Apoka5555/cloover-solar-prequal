@@ -33,9 +33,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const requestId = typeof request.id === 'string' ? request.id : undefined;
 
     const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const body: ApiErrorDto = {
       statusCode: status,
