@@ -3,3 +3,9 @@ dist
 .next
 coverage
 generated
+
+# Written by Next.js on every build.
+next-env.d.ts
+
+# Written by Prisma.
+apps/api/src/generated

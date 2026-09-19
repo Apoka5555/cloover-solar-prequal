@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  # Everything that needs no database, so a formatting slip or a type error is
+  # reported in under a minute.
+  quality:
+    name: Lint, types and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The Prisma client is generated rather than committed, so it has to
+      # exist before anything type-checks.
+      - name: Generate Prisma client
+        run: pnpm --filter @cloover/api exec prisma generate
+
+      - name: Build shared contracts
+        run: pnpm --filter @cloover/contracts build
+
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:unit
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: cloover
+          POSTGRES_PASSWORD: cloover_ci_password
+          POSTGRES_DB: cloover_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U cloover -d cloover_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      TEST_DATABASE_URL: postgresql://cloover:cloover_ci_password@localhost:5433/cloover_test?schema=public
+      JWT_SECRET: continuous-integration-secret-at-least-32-chars
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @cloover/api exec prisma generate
+
+      - name: Build shared contracts
+        run: pnpm --filter @cloover/contracts build
+
+      # Applies the committed migrations against a real Postgres, so a
+      # migration that cannot be applied fails the build rather than the
+      # deployment.
+      - name: Run the API integration suite
+        run: pnpm test:e2e
+
+  build:
+    name: Production builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Images are built but not pushed. A registry push and a deploy would be
+      # a separate workflow gated on this one and on the environment.
+      - name: Build the API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          target: runner
+          push: false
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+      - name: Build the web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          target: runner
+          push: false
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
