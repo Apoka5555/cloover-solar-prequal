@@ -13,7 +13,7 @@ import type { AuthenticatedUser } from '../auth/auth.types.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { priceQuote } from './pricing.js';
-import { toQuoteDto, toQuoteSummaryDto, type QuoteRecord } from './quote.mapper.js';
+import { toQuoteDto, toQuoteSummaryDto } from './quote.mapper.js';
 
 const WITH_OFFERS_AND_OWNER = {
   offers: true,
@@ -69,7 +69,7 @@ export class QuotesService {
       include: WITH_OFFERS_AND_OWNER,
     });
 
-    return toQuoteDto(quote as QuoteRecord, owner.role === 'ADMIN');
+    return toQuoteDto(quote, owner.role === 'ADMIN');
   }
 
   /**
@@ -91,7 +91,7 @@ export class QuotesService {
       throw new NotFoundException('Quote not found');
     }
 
-    return toQuoteDto(quote as QuoteRecord, isAdmin);
+    return toQuoteDto(quote, isAdmin);
   }
 
   listForOwner(ownerId: string, query: ListQuotesQuery): Promise<PageDto<QuoteSummaryDto>> {
@@ -145,7 +145,7 @@ export class QuotesService {
     ]);
 
     return {
-      items: rows.map((row) => toQuoteSummaryDto(row as QuoteRecord, includeOwner)),
+      items: rows.map((row) => toQuoteSummaryDto(row, includeOwner)),
       page,
       pageSize,
       total,

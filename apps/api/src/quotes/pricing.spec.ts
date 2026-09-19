@@ -157,9 +157,9 @@ describe('priceQuote', () => {
   it('charges more interest in total the longer the term runs', () => {
     const [five, ten, fifteen] = priceQuote(bandAInput).offers;
 
-    expect(five!.totalPaidCents).toBeLessThan(ten!.totalPaidCents);
-    expect(ten!.totalPaidCents).toBeLessThan(fifteen!.totalPaidCents);
-    expect(five!.totalPaidCents).toBeGreaterThan(five!.principalCents);
+    expect(five.totalPaidCents).toBeLessThan(ten.totalPaidCents);
+    expect(ten.totalPaidCents).toBeLessThan(fifteen.totalPaidCents);
+    expect(five.totalPaidCents).toBeGreaterThan(five.principalCents);
   });
 
   it('prices fractional system sizes without floating point drift', () => {

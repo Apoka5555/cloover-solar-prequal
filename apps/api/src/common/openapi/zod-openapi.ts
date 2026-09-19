@@ -12,5 +12,5 @@ export function openApiSchemaOf(schema: ZodType): OpenApiSchema {
     io: 'input',
     target: 'openapi-3.0',
     unrepresentable: 'any',
-  }) as OpenApiSchema;
+  });
 }

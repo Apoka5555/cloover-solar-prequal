@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import type { AuthUserDto, LoginInput, RegisterInput, UserRole } from '@cloover/contracts';
+import type { AuthUserDto, LoginInput, RegisterInput } from '@cloover/contracts';
 import type { CookieOptions } from 'express';
 import type { Env } from '../config/env.schema.js';
 import type { User } from '../generated/prisma/client.js';
@@ -91,6 +91,6 @@ function toAuthUser(user: User): AuthUserDto {
     id: user.id,
     email: user.email,
     fullName: user.fullName,
-    role: user.role as UserRole,
+    role: user.role,
   };
 }

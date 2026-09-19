@@ -4,7 +4,6 @@ import {
   type QuoteOfferDto,
   type QuoteOwnerDto,
   type QuoteSummaryDto,
-  type RiskBand,
 } from '@cloover/contracts';
 import type { Quote, QuoteOffer, User } from '../generated/prisma/client.js';
 
@@ -40,7 +39,7 @@ export function toQuoteDto(quote: QuoteRecord, includeOwner = false): QuoteDto {
       systemPrice: centsToEuros(quote.systemPriceCents),
       downPayment: centsToEuros(quote.downPaymentCents),
       principal: centsToEuros(quote.principalCents),
-      riskBand: quote.riskBand as RiskBand,
+      riskBand: quote.riskBand,
       apr: quote.aprBps / BASIS_POINTS_PER_UNIT,
       aprPercent: quote.aprBps / BASIS_POINTS_PER_PERCENT,
       pricingVersion: quote.pricingVersion,
@@ -58,7 +57,7 @@ export function toQuoteSummaryDto(quote: QuoteRecord, includeOwner = false): Quo
     createdAt: quote.createdAt.toISOString(),
     systemSizeKw: quote.systemSizeWatts / 1000,
     systemPrice: centsToEuros(quote.systemPriceCents),
-    riskBand: quote.riskBand as RiskBand,
+    riskBand: quote.riskBand,
     apr: quote.aprBps / BASIS_POINTS_PER_UNIT,
     aprPercent: quote.aprBps / BASIS_POINTS_PER_PERCENT,
     ...(includeOwner && quote.user ? { owner: toOwnerDto(quote.user) } : {}),

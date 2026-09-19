@@ -9,6 +9,8 @@ import {
 import type { ApiErrorDto, FieldErrorDto } from '@cloover/contracts';
 import type { Request, Response } from 'express';
 
+const SERVER_ERROR_THRESHOLD = 500;
+
 interface HttpExceptionBody {
   message?: string | string[];
   error?: string;
@@ -59,7 +61,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     }
 
-    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    if (status >= SERVER_ERROR_THRESHOLD) {
       this.logger.error(
         `${request.method} ${request.url} failed`,
         exception instanceof Error ? exception.stack : String(exception),
