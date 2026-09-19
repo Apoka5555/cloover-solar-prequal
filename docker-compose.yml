@@ -1,0 +1,91 @@
+name: cloover
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cloover}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cloover_local_password}
+      POSTGRES_DB: ${POSTGRES_DB:-cloover}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-cloover} -d ${POSTGRES_DB:-cloover}']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # Throwaway database for the integration suite. Started with
+  # `docker compose --profile test up -d db-test`. Its data lives in memory, so
+  # a test run never touches development data and starts from nothing.
+  db-test:
+    profiles: ['test']
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cloover}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cloover_local_password}
+      POSTGRES_DB: cloover_test
+    ports:
+      - '${TEST_POSTGRES_PORT:-5433}:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-cloover} -d cloover_test']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cloover}:${POSTGRES_PASSWORD:-cloover_local_password}@db:5432/${POSTGRES_DB:-cloover}?schema=public
+      API_PORT: 3001
+      API_GLOBAL_PREFIX: ${API_GLOBAL_PREFIX:-api}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set; see .env.example}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_PRETTY: 'false'
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@test.com}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin123!pass}
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-Cloover Admin}
+      SEED_USER_EMAIL: ${SEED_USER_EMAIL:-user@test.com}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-User123!pass}
+      SEED_USER_NAME: ${SEED_USER_NAME:-Sam Homeowner}
+    ports:
+      - '${API_PORT:-3001}:3001'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_INTERNAL_URL: http://api:3001
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+
+volumes:
+  db-data:

@@ -43,11 +43,15 @@ export type LoginInput = z.input<typeof loginSchema>;
 
 export const createQuoteSchema = z
   .object({
-    fullName: fullNameSchema,
-    email: emailSchema,
+    fullName: fullNameSchema.meta({ description: 'Applicant name', examples: ['Ada Lovelace'] }),
+    email: emailSchema.meta({ description: 'Applicant email', examples: ['ada@example.com'] }),
     address: trimmedString
       .min(INPUT_LIMITS.address.min, 'Address must be at least 5 characters')
-      .max(INPUT_LIMITS.address.max, 'Address is too long'),
+      .max(INPUT_LIMITS.address.max, 'Address is too long')
+      .meta({
+        description: 'Installation address',
+        examples: ['Hauptstrasse 1, 10115 Berlin'],
+      }),
     monthlyConsumptionKwh: z.preprocess(
       blankToUndefined,
       z.coerce
@@ -55,21 +59,30 @@ export const createQuoteSchema = z
         .int('Monthly consumption must be a whole number of kWh')
         .min(INPUT_LIMITS.monthlyConsumptionKwh.min, 'Monthly consumption must be at least 1 kWh')
         .max(INPUT_LIMITS.monthlyConsumptionKwh.max, 'Monthly consumption looks too high'),
-    ),
+    ).meta({
+      description: 'Household electricity use per month, in whole kilowatt hours',
+      examples: [450],
+    }),
     systemSizeKw: z.preprocess(
       blankToUndefined,
       z.coerce
         .number('System size must be a number')
         .min(INPUT_LIMITS.systemSizeKw.min, 'System size must be at least 0.1 kW')
         .max(INPUT_LIMITS.systemSizeKw.max, 'System size must be 100 kW or less'),
-    ),
+    ).meta({
+      description: 'Peak capacity of the proposed array, in kilowatts',
+      examples: [6],
+    }),
     downPayment: z.preprocess(
       blankToUndefined,
       z.coerce
         .number('Down payment must be a number')
         .min(INPUT_LIMITS.downPayment.min, 'Down payment cannot be negative')
         .optional(),
-    ),
+    ).meta({
+      description: 'Cash paid upfront in euros. Defaults to zero and may not exceed the system price',
+      examples: [1200],
+    }),
   })
   .refine(
     (value) =>
