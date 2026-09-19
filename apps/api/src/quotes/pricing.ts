@@ -144,3 +144,64 @@ export function priceQuote(input: PricingInput): PricingResult {
     offers,
   };
 }
+
+export interface ScheduleRow {
+  period: number;
+  paymentCents: number;
+  interestCents: number;
+  principalCents: number;
+  remainingBalanceCents: number;
+}
+
+/**
+ * Expands a loan into its instalments.
+ *
+ * Each month, interest accrues on the outstanding balance and the rest of the
+ * payment reduces it. Early instalments are therefore mostly interest, which
+ * is the point of showing the schedule at all.
+ *
+ * Because the monthly payment is rounded to whole cents, replaying it for the
+ * full term leaves a small remainder. The final instalment absorbs it, so the
+ * balance ends at exactly zero, which is how a lender actually closes a loan.
+ */
+export function buildSchedule(
+  principalCents: number,
+  aprBps: number,
+  termYears: number,
+): ScheduleRow[] {
+  const payment = monthlyPaymentCents(principalCents, aprBps, termYears);
+
+  if (principalCents === 0) {
+    return [];
+  }
+
+  const numberOfPayments = termYears * MONTHS_PER_YEAR;
+  const monthlyRate = aprBps / BASIS_POINTS_PER_UNIT / MONTHS_PER_YEAR;
+  const rows: ScheduleRow[] = [];
+
+  let balance = principalCents;
+
+  for (let period = 1; period <= numberOfPayments; period += 1) {
+    const interest = Math.round(balance * monthlyRate);
+    const isFinal = period === numberOfPayments;
+
+    const repaid = isFinal ? balance : Math.min(payment - interest, balance);
+    const paid = interest + repaid;
+
+    balance -= repaid;
+
+    rows.push({
+      period,
+      paymentCents: paid,
+      interestCents: interest,
+      principalCents: repaid,
+      remainingBalanceCents: balance,
+    });
+
+    if (balance === 0) {
+      break;
+    }
+  }
+
+  return rows;
+}

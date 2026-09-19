@@ -9,11 +9,21 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiBody, ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
+  ApiBody,
+  ApiCookieAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
+  amortizationQuerySchema,
   createQuoteSchema,
   listQuotesQuerySchema,
   type CreateQuotePayload,
+  type AmortizationQuery,
+  type AmortizationScheduleDto,
   type ListQuotesQuery,
   type PageDto,
   type QuoteDto,
@@ -52,6 +62,18 @@ export class QuotesController {
     @Query(new ZodValidationPipe(listQuotesQuerySchema)) query: ListQuotesQuery,
   ): Promise<PageDto<QuoteSummaryDto>> {
     return this.quotes.listForOwner(user.id, query);
+  }
+
+  @Get(':id/schedule')
+  @ApiOperation({ summary: 'Expand one offer into its month-by-month instalments' })
+  @ApiQuery({ name: 'termYears', enum: [5, 10, 15], description: 'Which offer to expand' })
+  @ApiResponse({ status: 404, description: 'No such quote, or no offer for that term' })
+  schedule(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Query(new ZodValidationPipe(amortizationQuerySchema)) query: AmortizationQuery,
+  ): Promise<AmortizationScheduleDto> {
+    return this.quotes.findScheduleFor(id, user, query.termYears);
   }
 
   @Get(':id')

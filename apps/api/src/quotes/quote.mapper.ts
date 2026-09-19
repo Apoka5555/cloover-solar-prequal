@@ -1,11 +1,13 @@
 import {
   centsToEuros,
+  type AmortizationScheduleDto,
   type QuoteDto,
   type QuoteOfferDto,
   type QuoteOwnerDto,
   type QuoteSummaryDto,
 } from '@cloover/contracts';
 import type { Quote, QuoteOffer, User } from '../generated/prisma/client.js';
+import type { ScheduleRow } from './pricing.js';
 
 const BASIS_POINTS_PER_UNIT = 10_000;
 const BASIS_POINTS_PER_PERCENT = 100;
@@ -79,4 +81,31 @@ function toOfferDto(offer: QuoteOffer): QuoteOfferDto {
 
 function toOwnerDto(user: Pick<User, 'id' | 'fullName' | 'email'>): QuoteOwnerDto {
   return { id: user.id, fullName: user.fullName, email: user.email };
+}
+
+export function toAmortizationScheduleDto(
+  quoteId: string,
+  offer: QuoteOffer,
+  rows: ScheduleRow[],
+): AmortizationScheduleDto {
+  const totalPaidCents = rows.reduce((total, row) => total + row.paymentCents, 0);
+  const totalInterestCents = rows.reduce((total, row) => total + row.interestCents, 0);
+
+  return {
+    quoteId,
+    termYears: offer.termYears,
+    apr: offer.aprBps / BASIS_POINTS_PER_UNIT,
+    aprPercent: offer.aprBps / BASIS_POINTS_PER_PERCENT,
+    principal: centsToEuros(offer.principalCents),
+    monthlyPayment: centsToEuros(offer.monthlyPaymentCents),
+    totalPaid: centsToEuros(totalPaidCents),
+    totalInterest: centsToEuros(totalInterestCents),
+    rows: rows.map((row) => ({
+      period: row.period,
+      payment: centsToEuros(row.paymentCents),
+      interest: centsToEuros(row.interestCents),
+      principal: centsToEuros(row.principalCents),
+      remainingBalance: centsToEuros(row.remainingBalanceCents),
+    })),
+  };
 }

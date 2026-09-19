@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   APR_BPS_BY_BAND,
+  buildSchedule,
   determineRiskBand,
   monthlyPaymentCents,
   priceQuote,
@@ -177,5 +178,60 @@ describe('priceQuote', () => {
     ['a fractional down payment', { downPaymentCents: 100.5 }],
   ])('rejects %s', (_label, patch) => {
     expect(() => priceQuote({ ...bandAInput, ...patch })).toThrow(RangeError);
+  });
+});
+
+describe('buildSchedule', () => {
+  it('produces one row per instalment', () => {
+    expect(buildSchedule(600_000, 690, 5)).toHaveLength(60);
+    expect(buildSchedule(600_000, 690, 15)).toHaveLength(180);
+  });
+
+  it('retires the loan exactly, leaving no balance', () => {
+    const rows = buildSchedule(600_000, 690, 10);
+    expect(rows.at(-1)?.remainingBalanceCents).toBe(0);
+  });
+
+  it('splits every instalment into interest and repayment', () => {
+    for (const row of buildSchedule(600_000, 890, 5)) {
+      expect(row.interestCents + row.principalCents).toBe(row.paymentCents);
+      expect(row.interestCents).toBeGreaterThanOrEqual(0);
+      expect(row.principalCents).toBeGreaterThan(0);
+    }
+  });
+
+  it('repays the full principal across the schedule', () => {
+    const rows = buildSchedule(600_000, 690, 10);
+    const repaid = rows.reduce((total, row) => total + row.principalCents, 0);
+    expect(repaid).toBe(600_000);
+  });
+
+  it('shifts from interest towards principal over the term', () => {
+    const rows = buildSchedule(600_000, 1_190, 15);
+    const first = rows[0];
+    const last = rows.at(-1);
+
+    expect(first.interestCents).toBeGreaterThan(first.principalCents);
+    expect(last?.principalCents).toBeGreaterThan(last?.interestCents ?? 0);
+  });
+
+  it('charges interest on the opening balance in the first month', () => {
+    const [first] = buildSchedule(600_000, 690, 5);
+    expect(first?.interestCents).toBe(Math.round(600_000 * (0.069 / 12)));
+  });
+
+  it('agrees with the offer on what the loan costs in total', () => {
+    const rows = buildSchedule(600_000, 690, 10);
+    const interest = rows.reduce((total, row) => total + row.interestCents, 0);
+    const paid = rows.reduce((total, row) => total + row.paymentCents, 0);
+
+    expect(paid - interest).toBe(600_000);
+    // The rounded instalment overstates the total very slightly; the schedule
+    // is the exact figure and must not drift far from the advertised one.
+    expect(Math.abs(paid - 6_936 * 120)).toBeLessThan(6_936);
+  });
+
+  it('returns nothing to schedule for a fully prepaid system', () => {
+    expect(buildSchedule(0, 690, 5)).toEqual([]);
   });
 });

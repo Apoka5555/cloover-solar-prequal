@@ -214,6 +214,46 @@ with the requesting user's id, name and email.
 **404** when the quote does not exist _or_ belongs to another user. **400**
 when `id` is not a UUID.
 
+### GET /quotes/{id}/schedule
+
+Query: `termYears`, which must be 5, 10 or 15.
+
+**200**:
+
+```json
+{
+  "quoteId": "01a0b708-bd4b-76b8-9d05-794b754254d2",
+  "termYears": 10,
+  "apr": 0.069,
+  "aprPercent": 6.9,
+  "principal": 6000,
+  "monthlyPayment": 69.36,
+  "totalPaid": 8322.88,
+  "totalInterest": 2322.88,
+  "rows": [
+    {
+      "period": 1,
+      "payment": 69.36,
+      "interest": 34.5,
+      "principal": 34.86,
+      "remainingBalance": 5965.14
+    },
+    { "period": 120, "payment": 69.43, "interest": 0.4, "principal": 69.03, "remainingBalance": 0 }
+  ]
+}
+```
+
+One row per instalment, so 60, 120 or 180 of them. `remainingBalance` on the
+final row is always `0`: the monthly payment is rounded to whole cents, and the
+last instalment absorbs the remainder. `totalPaid` here is therefore the exact
+figure, which differs by a few cents from the offer's `monthlyPayment` times
+the number of payments.
+
+A fully prepaid quote has nothing to finance and returns an empty `rows` array.
+
+**400** for a term that is not offered. **404** when the quote does not exist or
+belongs to another user.
+
 ---
 
 ### GET /admin/quotes

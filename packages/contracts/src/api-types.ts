@@ -100,3 +100,27 @@ export interface ApiErrorDto {
   /** Populated for validation failures so a form can map them back to inputs. */
   fieldErrors?: FieldErrorDto[];
 }
+
+/**
+ * One instalment in an amortisation schedule: what is paid, how it splits
+ * between interest and repayment, and what is still owed afterwards.
+ */
+export interface AmortizationRowDto {
+  period: number;
+  payment: number;
+  interest: number;
+  principal: number;
+  remainingBalance: number;
+}
+
+export interface AmortizationScheduleDto {
+  quoteId: string;
+  termYears: number;
+  apr: number;
+  aprPercent: number;
+  principal: number;
+  monthlyPayment: number;
+  totalPaid: number;
+  totalInterest: number;
+  rows: AmortizationRowDto[];
+}

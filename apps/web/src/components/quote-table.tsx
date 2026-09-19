@@ -62,10 +62,10 @@ export function QuoteTable({ quotes, caption, showOwner = false }: QuoteTablePro
               <td className="px-4 py-3 text-right">
                 <Link
                   href={`/quotes/${quote.id}`}
+                  aria-label={`View quote from ${formatDate(quote.createdAt)}`}
                   className="font-medium text-brand-700 underline underline-offset-2"
                 >
                   View
-                  <span className="sr-only"> quote from {formatDate(quote.createdAt)}</span>
                 </Link>
               </td>
             </tr>

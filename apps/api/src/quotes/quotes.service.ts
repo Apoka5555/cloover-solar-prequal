@@ -4,6 +4,7 @@ import {
   type AdminListQuotesQuery,
   type CreateQuotePayload,
   type ListQuotesQuery,
+  type AmortizationScheduleDto,
   type PageDto,
   type QuoteDto,
   type QuoteOwnerDto,
@@ -12,8 +13,8 @@ import {
 import type { AuthenticatedUser } from '../auth/auth.types.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { priceQuote } from './pricing.js';
-import { toQuoteDto, toQuoteSummaryDto } from './quote.mapper.js';
+import { buildSchedule, priceQuote } from './pricing.js';
+import { toAmortizationScheduleDto, toQuoteDto, toQuoteSummaryDto } from './quote.mapper.js';
 
 const WITH_OFFERS_AND_OWNER = {
   offers: true,
@@ -92,6 +93,36 @@ export class QuotesService {
     }
 
     return toQuoteDto(quote, isAdmin);
+  }
+
+  /**
+   * Expands one of a quote's offers into its instalments. The schedule is
+   * derived on demand from the stored offer rather than persisted, because it
+   * is a pure function of figures that are already recorded.
+   */
+  async findScheduleFor(
+    id: string,
+    requester: AuthenticatedUser,
+    termYears: number,
+  ): Promise<AmortizationScheduleDto> {
+    const isAdmin = requester.role === 'ADMIN';
+
+    const quote = await this.prisma.quote.findFirst({
+      where: { id, ...(isAdmin ? {} : { userId: requester.id }) },
+      include: { offers: true },
+    });
+
+    const offer = quote?.offers.find((candidate) => candidate.termYears === termYears);
+
+    if (!quote || !offer) {
+      throw new NotFoundException('Quote not found');
+    }
+
+    return toAmortizationScheduleDto(
+      quote.id,
+      offer,
+      buildSchedule(offer.principalCents, offer.aprBps, offer.termYears),
+    );
   }
 
   listForOwner(ownerId: string, query: ListQuotesQuery): Promise<PageDto<QuoteSummaryDto>> {

@@ -232,6 +232,64 @@ describe('quotes', () => {
     });
   });
 
+  describe('GET /api/quotes/:id/schedule', () => {
+    it('expands an offer into one row per instalment', async () => {
+      const created = await createQuote(owner).expect(201);
+
+      const response = await context
+        .http()
+        .get(`/api/quotes/${created.body.id}/schedule?termYears=10`)
+        .set('Cookie', owner.cookie)
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        quoteId: created.body.id,
+        termYears: 10,
+        aprPercent: 6.9,
+        principal: 6000,
+        monthlyPayment: 69.36,
+      });
+      expect(response.body.rows).toHaveLength(120);
+      expect(response.body.rows.at(-1).remainingBalance).toBe(0);
+    });
+
+    it('starts mostly as interest and ends mostly as repayment', async () => {
+      const created = await createQuote(owner).expect(201);
+
+      const { body } = await context
+        .http()
+        .get(`/api/quotes/${created.body.id}/schedule?termYears=15`)
+        .set('Cookie', owner.cookie)
+        .expect(200);
+
+      const first = body.rows[0];
+      const last = body.rows.at(-1);
+
+      expect(first.interest).toBeGreaterThan(first.principal);
+      expect(last.principal).toBeGreaterThan(last.interest);
+    });
+
+    it('rejects a term that is not offered', async () => {
+      const created = await createQuote(owner).expect(201);
+
+      await context
+        .http()
+        .get(`/api/quotes/${created.body.id}/schedule?termYears=7`)
+        .set('Cookie', owner.cookie)
+        .expect(400);
+    });
+
+    it('will not expand another user\u2019s quote', async () => {
+      const created = await createQuote(owner).expect(201);
+
+      await context
+        .http()
+        .get(`/api/quotes/${created.body.id}/schedule?termYears=5`)
+        .set('Cookie', stranger.cookie)
+        .expect(404);
+    });
+  });
+
   describe('GET /api/admin/quotes', () => {
     it('refuses an ordinary user even though the route exists', async () => {
       await context.http().get('/api/admin/quotes').set('Cookie', owner.cookie).expect(403);

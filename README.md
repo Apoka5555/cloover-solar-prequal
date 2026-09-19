@@ -119,6 +119,20 @@ above the system price is rejected, because the formula has no meaning for a
 negative principal. A down payment equal to the price yields offers with a zero
 monthly payment rather than a division by zero.
 
+## Beyond the brief
+
+**An interactive OpenAPI page** at `/api/docs`, generated from the same Zod
+schemas that validate requests.
+
+**An amortisation schedule.** Each offer links to its instalment-by-instalment
+breakdown, showing how much of every payment is interest, how much reduces the
+balance, and what is still owed. Because the monthly payment is rounded to
+whole cents, replaying it for the full term leaves a small remainder; the final
+instalment absorbs it so the balance ends at exactly zero, which is how a
+lender actually closes a loan. The schedule is derived on request from the
+stored offer rather than persisted, because it is a pure function of figures
+that are already recorded.
+
 ## API reference
 
 [`docs/api.md`](docs/api.md) is the written reference. The running API also
@@ -231,7 +245,7 @@ production.
 1. Refresh token rotation, and rate limiting on the authentication endpoints.
 2. An end-to-end browser test with Playwright covering sign-in, quote creation
    and viewing the result.
-3. An amortisation schedule per offer, and a PDF export of a quote.
+3. A PDF export of a quote and its schedule, for the customer to keep.
 4. Pagination controls on the personal quote list, which currently fetches up
    to fifty.
 5. Structured audit events for quote creation, which a lender needs for

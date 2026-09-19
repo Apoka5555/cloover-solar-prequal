@@ -16,7 +16,7 @@ const offers: QuoteOfferDto[] = [5, 10, 15].map((termYears, index) => ({
 
 describe('OfferTable', () => {
   it('renders a row per term with its monthly payment', () => {
-    render(<OfferTable offers={offers} />);
+    render(<OfferTable offers={offers} quoteId="quote-1" />);
 
     const table = screen.getByRole('table');
     const rows = within(table).getAllByRole('row');
@@ -28,7 +28,7 @@ describe('OfferTable', () => {
   });
 
   it('gives the table a caption and column headers for screen readers', () => {
-    render(<OfferTable offers={offers} />);
+    render(<OfferTable offers={offers} quoteId="quote-1" />);
 
     const table = screen.getByRole('table');
     expect(table).toHaveAccessibleName(/Instalment offers by term/i);
@@ -39,10 +39,27 @@ describe('OfferTable', () => {
   });
 
   it('shows the same offers as cards for narrow screens', () => {
-    render(<OfferTable offers={offers} />);
+    render(<OfferTable offers={offers} quoteId="quote-1" />);
 
     const cards = screen.getAllByRole('listitem');
     expect(cards).toHaveLength(3);
     expect(within(cards[0]!).getByText(/118,52/)).toBeInTheDocument();
+  });
+});
+
+describe('OfferTable schedule links', () => {
+  it('links each term to its own schedule', () => {
+    render(<OfferTable offers={offers} quoteId="quote-1" />);
+
+    const link = screen.getAllByRole('link', { name: 'View schedule for the 10 year term' })[0];
+    expect(link).toHaveAttribute('href', '/quotes/quote-1?term=10#schedule');
+  });
+
+  it('marks the schedule that is already open', () => {
+    render(<OfferTable offers={offers} quoteId="quote-1" openTerm={5} />);
+
+    const links = screen.getAllByRole('link', { name: 'Viewing schedule for the 5 year term' });
+    expect(links.length).toBeGreaterThan(0);
+    expect(links[0]).toHaveAttribute('aria-current', 'true');
   });
 });

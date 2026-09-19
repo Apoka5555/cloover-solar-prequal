@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { INPUT_LIMITS, systemPriceCents } from './domain.js';
+import { INPUT_LIMITS, OFFER_TERM_YEARS, systemPriceCents } from './domain.js';
 import { eurosToCents } from './money.js';
 
 /**
@@ -126,3 +126,18 @@ export const adminListQuotesQuerySchema = z.object({
   userId: z.preprocess(blankToUndefined, z.uuid('userId must be a UUID').optional()),
 });
 export type AdminListQuotesQuery = z.output<typeof adminListQuotesQuerySchema>;
+
+export const amortizationQuerySchema = z.object({
+  termYears: z.preprocess(
+    blankToUndefined,
+    z.coerce
+      .number('Term must be a number')
+      .int()
+      .refine(
+        (value): value is (typeof OFFER_TERM_YEARS)[number] =>
+          (OFFER_TERM_YEARS as readonly number[]).includes(value),
+        `Term must be one of ${OFFER_TERM_YEARS.join(', ')} years`,
+      ),
+  ),
+});
+export type AmortizationQuery = z.output<typeof amortizationQuerySchema>;

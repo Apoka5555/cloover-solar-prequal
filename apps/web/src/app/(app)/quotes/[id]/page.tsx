@@ -1,8 +1,9 @@
-import type { QuoteDto } from '@cloover/contracts';
+import { OFFER_TERM_YEARS, type AmortizationScheduleDto, type QuoteDto } from '@cloover/contracts';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { OfferTable } from '@/components/offer-table';
+import { ScheduleTable } from '@/components/schedule-table';
 import { Card, CardTitle } from '@/components/ui/card';
 import { RiskBandBadge } from '@/components/ui/risk-band';
 import { ApiError, apiFetch } from '@/lib/api';
@@ -10,8 +11,15 @@ import { formatDate, formatEur, formatKw, formatPercent } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Quote' };
 
-export default async function QuoteDetailPage({ params }: PageProps<'/quotes/[id]'>) {
+/** Reads the requested schedule term, ignoring anything that is not on offer. */
+function readTerm(value: string | string[] | undefined): number | undefined {
+  const term = Number(typeof value === 'string' ? value : NaN);
+  return (OFFER_TERM_YEARS as readonly number[]).includes(term) ? term : undefined;
+}
+
+export default async function QuoteDetailPage({ params, searchParams }: PageProps<'/quotes/[id]'>) {
   const { id } = await params;
+  const openTerm = readTerm((await searchParams).term);
 
   let quote: QuoteDto;
   try {
@@ -25,6 +33,12 @@ export default async function QuoteDetailPage({ params }: PageProps<'/quotes/[id
     }
     throw error;
   }
+
+  // Derived on request from the stored offer, so it costs one extra call only
+  // when a customer actually opens it.
+  const schedule = openTerm
+    ? await apiFetch<AmortizationScheduleDto>(`/quotes/${id}/schedule?termYears=${openTerm}`)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -85,8 +99,17 @@ export default async function QuoteDetailPage({ params }: PageProps<'/quotes/[id
         <p className="text-sm text-ink-muted">
           A longer term lowers the monthly payment and raises the total interest.
         </p>
-        <OfferTable offers={quote.offers} />
+        <OfferTable offers={quote.offers} quoteId={quote.id} openTerm={openTerm} />
       </section>
+
+      {schedule ? (
+        <section aria-labelledby="schedule-heading" className="scroll-mt-4 space-y-3" id="schedule">
+          <h2 id="schedule-heading" className="text-base font-semibold text-ink">
+            Payment schedule over {schedule.termYears} years
+          </h2>
+          <ScheduleTable schedule={schedule} />
+        </section>
+      ) : null}
 
       <section aria-labelledby="inputs-heading">
         <Card>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   adminListQuotesQuerySchema,
+  amortizationQuerySchema,
   createQuoteSchema,
   listQuotesQuerySchema,
   loginSchema,
@@ -132,5 +133,23 @@ describe('monthly consumption', () => {
     const result = createQuoteSchema.safeParse({ ...validQuote, monthlyConsumptionKwh: 450.5 });
     expect(result.success).toBe(false);
     expect(errorFor(result)).toContain('monthlyConsumptionKwh');
+  });
+});
+
+describe('amortizationQuerySchema', () => {
+  it.each([5, 10, 15])('accepts the offered term of %i years', (termYears) => {
+    expect(amortizationQuerySchema.safeParse({ termYears }).success).toBe(true);
+  });
+
+  it('accepts a term supplied as a query string value', () => {
+    expect(amortizationQuerySchema.parse({ termYears: '10' })).toEqual({ termYears: 10 });
+  });
+
+  it.each([1, 7, 20, 0, -5])('rejects the unoffered term of %i years', (termYears) => {
+    expect(amortizationQuerySchema.safeParse({ termYears }).success).toBe(false);
+  });
+
+  it('requires a term', () => {
+    expect(amortizationQuerySchema.safeParse({}).success).toBe(false);
   });
 });
