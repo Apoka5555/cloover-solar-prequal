@@ -254,6 +254,21 @@ A fully prepaid quote has nothing to finance and returns an empty `rows` array.
 **400** for a term that is not offered. **404** when the quote does not exist or
 belongs to another user.
 
+### GET /quotes/{id}/pdf
+
+Query: `termYears`, optional. Supplying 5, 10 or 15 appends that offer's full
+payment schedule to the document.
+
+**200** with `Content-Type: application/pdf` and
+`Content-Disposition: attachment; filename="cloover-quote-<short id>.pdf"`.
+
+The document is rendered from the stored quote, not recomputed, so it always
+matches the figures shown on screen. Ownership is enforced by the same reads
+the JSON endpoints use.
+
+**400** for a term that is not offered. **404** when the quote does not exist
+or belongs to another user.
+
 ---
 
 ### GET /admin/quotes

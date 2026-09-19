@@ -141,3 +141,23 @@ export const amortizationQuerySchema = z.object({
   ),
 });
 export type AmortizationQuery = z.output<typeof amortizationQuerySchema>;
+
+/**
+ * The PDF export takes an optional term: supplying one appends that offer's
+ * full payment schedule to the document.
+ */
+export const quotePdfQuerySchema = z.object({
+  termYears: z.preprocess(
+    blankToUndefined,
+    z.coerce
+      .number('Term must be a number')
+      .int()
+      .refine(
+        (value): value is (typeof OFFER_TERM_YEARS)[number] =>
+          (OFFER_TERM_YEARS as readonly number[]).includes(value),
+        `Term must be one of ${OFFER_TERM_YEARS.join(', ')} years`,
+      )
+      .optional(),
+  ),
+});
+export type QuotePdfQuery = z.output<typeof quotePdfQuerySchema>;

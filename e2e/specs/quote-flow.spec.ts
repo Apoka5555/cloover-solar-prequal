@@ -101,4 +101,26 @@ test.describe('pre-qualification', () => {
     // The loan is retired exactly, so the final balance is zero.
     await expect(schedule.getByRole('row').last()).toContainText('0,00 €');
   });
+
+  test('a customer downloads the quote as a PDF', async ({ page }) => {
+    await signIn(page, SEEDED.user.email, SEEDED.user.password);
+    await page.goto('/quotes');
+    await page
+      .getByRole('link', { name: /^View quote from/ })
+      .first()
+      .click();
+
+    const download = page.waitForEvent('download');
+    await page.getByRole('link', { name: /Download PDF/ }).click();
+
+    const file = await download;
+    expect(file.suggestedFilename()).toMatch(/^cloover-quote-[0-9a-f]+\.pdf$/);
+
+    const stream = await file.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk as Buffer);
+    }
+    expect(Buffer.concat(chunks).subarray(0, 5).toString()).toBe('%PDF-');
+  });
 });

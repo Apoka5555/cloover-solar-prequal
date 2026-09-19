@@ -290,6 +290,67 @@ describe('quotes', () => {
     });
   });
 
+  describe('GET /api/quotes/:id/pdf', () => {
+    it('returns a PDF as a named attachment', async () => {
+      const created = await createQuote(owner).expect(201);
+
+      const response = await context
+        .http()
+        .get(`/api/quotes/${created.body.id}/pdf`)
+        .set('Cookie', owner.cookie)
+        .expect(200)
+        .expect('Content-Type', 'application/pdf');
+
+      expect(response.headers['content-disposition']).toContain('attachment');
+      expect(response.headers['content-disposition']).toContain('.pdf');
+      expect(response.body.subarray(0, 5).toString()).toBe('%PDF-');
+    });
+
+    it('grows when a payment schedule is appended', async () => {
+      const created = await createQuote(owner).expect(201);
+
+      const withoutSchedule = await context
+        .http()
+        .get(`/api/quotes/${created.body.id}/pdf`)
+        .set('Cookie', owner.cookie)
+        .expect(200);
+
+      const withSchedule = await context
+        .http()
+        .get(`/api/quotes/${created.body.id}/pdf?termYears=15`)
+        .set('Cookie', owner.cookie)
+        .expect(200);
+
+      expect(withSchedule.body.length).toBeGreaterThan(withoutSchedule.body.length);
+    });
+
+    it('rejects a term that is not offered', async () => {
+      const created = await createQuote(owner).expect(201);
+
+      await context
+        .http()
+        .get(`/api/quotes/${created.body.id}/pdf?termYears=7`)
+        .set('Cookie', owner.cookie)
+        .expect(400);
+    });
+
+    it('will not export another user\u2019s quote', async () => {
+      const created = await createQuote(owner).expect(201);
+
+      await context
+        .http()
+        .get(`/api/quotes/${created.body.id}/pdf`)
+        .set('Cookie', stranger.cookie)
+        .expect(404);
+    });
+
+    it('refuses an anonymous request', async () => {
+      const created = await createQuote(owner).expect(201);
+
+      await context.http().get(`/api/quotes/${created.body.id}/pdf`).expect(401);
+    });
+  });
+
   describe('GET /api/admin/quotes', () => {
     it('refuses an ordinary user even though the route exists', async () => {
       await context.http().get('/api/admin/quotes').set('Cookie', owner.cookie).expect(403);

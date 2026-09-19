@@ -42,21 +42,35 @@ export default async function QuoteDetailPage({ params, searchParams }: PageProp
 
   return (
     <div className="space-y-6">
-      <div>
-        <Link
-          href="/quotes"
-          className="text-sm font-medium text-brand-700 underline underline-offset-2"
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <Link
+            href="/quotes"
+            className="text-sm font-medium text-brand-700 underline underline-offset-2"
+          >
+            ← Back to my quotes
+          </Link>
+          <h1 className="mt-2 text-xl font-semibold text-ink">
+            Pre-qualification from {formatDate(quote.createdAt)}
+          </h1>
+          {quote.owner ? (
+            <p className="mt-1 text-sm text-ink-muted">
+              Requested by {quote.owner.fullName} ({quote.owner.email})
+            </p>
+          ) : null}
+        </div>
+
+        {/* A plain link, so the download works without JavaScript. Opening a
+            schedule first includes it in the document. */}
+        <a
+          href={`/api/quotes/${quote.id}/pdf${openTerm ? `?termYears=${openTerm}` : ''}`}
+          className="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink hover:bg-brand-50"
         >
-          ← Back to my quotes
-        </Link>
-        <h1 className="mt-2 text-xl font-semibold text-ink">
-          Pre-qualification from {formatDate(quote.createdAt)}
-        </h1>
-        {quote.owner ? (
-          <p className="mt-1 text-sm text-ink-muted">
-            Requested by {quote.owner.fullName} ({quote.owner.email})
-          </p>
-        ) : null}
+          Download PDF
+          {openTerm ? (
+            <span className="text-ink-muted"> with the {openTerm} year schedule</span>
+          ) : null}
+        </a>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

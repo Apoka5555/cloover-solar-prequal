@@ -5,6 +5,7 @@ import {
   createQuoteSchema,
   listQuotesQuerySchema,
   loginSchema,
+  quotePdfQuerySchema,
   registerSchema,
 } from './schemas.js';
 
@@ -151,5 +152,19 @@ describe('amortizationQuerySchema', () => {
 
   it('requires a term', () => {
     expect(amortizationQuerySchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe('quotePdfQuerySchema', () => {
+  it('works without a term, for a quote-only document', () => {
+    expect(quotePdfQuerySchema.parse({})).toEqual({ termYears: undefined });
+  });
+
+  it('accepts an offered term, to append its schedule', () => {
+    expect(quotePdfQuerySchema.parse({ termYears: '15' })).toEqual({ termYears: 15 });
+  });
+
+  it('rejects a term that is not offered', () => {
+    expect(quotePdfQuerySchema.safeParse({ termYears: 7 }).success).toBe(false);
   });
 });

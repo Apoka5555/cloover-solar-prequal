@@ -53,12 +53,12 @@ pnpm dev                                      # API on :3001, web on :3000
 ## Tests
 
 ```bash
-pnpm test:unit                                # 119 tests, no database needed
+pnpm test:unit                                # 122 tests, no database needed
 
 docker compose --profile test up -d db-test   # throwaway Postgres on :5433
-pnpm test:e2e                                 # 45 tests against a real database
+pnpm test:e2e                                 # 50 tests against a real database
 
-pnpm test:browser                             # 18 tests in a real browser
+pnpm test:browser                             # 20 tests in a real browser
 ```
 
 Unit tests cover the pricing engine, the amortisation schedule, the shared
@@ -133,6 +133,12 @@ monthly payment rather than a division by zero.
 schemas that validate requests.
 
 **Browser tests** with Playwright, run at two viewport widths.
+
+**A PDF export.** Every quote downloads as a formatted document with the
+summary and the three offers; opening a schedule first appends it, with the
+column headers repeated on each page so a printed sheet reads on its own. It
+is rendered server side from the stored quote, so an exported document always
+matches what was shown and what is recorded.
 
 **An amortisation schedule.** Each offer links to its instalment-by-instalment
 breakdown, showing how much of every payment is interest, how much reduces the
@@ -254,12 +260,11 @@ production.
 ## What I would do next
 
 1. Refresh token rotation, and rate limiting on the authentication endpoints.
-2. A PDF export of a quote and its schedule, for the customer to keep.
-3. Pagination controls on the personal quote list, which currently fetches up
+2. Pagination controls on the personal quote list, which currently fetches up
    to fifty.
-4. Structured audit events for quote creation, which a lender needs for
+3. Structured audit events for quote creation, which a lender needs for
    compliance rather than for debugging.
-5. An identity provider. The token verification sits behind the Passport
+4. An identity provider. The token verification sits behind the Passport
    strategy, so adding Keycloak means swapping the JWT strategy for one that
    validates against the realm's JWKS endpoint, mapping the subject onto a
    local user row and realm roles onto the application role. Nothing outside
