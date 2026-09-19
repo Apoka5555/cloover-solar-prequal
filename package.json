@@ -16,11 +16,12 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:unit": "pnpm -r test:unit",
-    "test:e2e": "pnpm --filter @cloover/api test:e2e"
+    "test:e2e": "pnpm --filter @cloover/api test:e2e",
+    "test:browser": "docker compose up -d --wait && pnpm --filter @cloover/e2e test:browser"
   },
   "devDependencies": {
     "prettier": "3.9.8",
-    "typescript": "6.0.3",
-    "prisma": "7.10.0"
+    "prisma": "7.10.0",
+    "typescript": "6.0.3"
   }
 }

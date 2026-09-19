@@ -53,16 +53,24 @@ pnpm dev                                      # API on :3001, web on :3000
 ## Tests
 
 ```bash
-pnpm test:unit                                # 92 tests, no database needed
+pnpm test:unit                                # 119 tests, no database needed
 
 docker compose --profile test up -d db-test   # throwaway Postgres on :5433
-pnpm test:e2e                                 # 41 tests against a real database
+pnpm test:e2e                                 # 45 tests against a real database
+
+pnpm test:browser                             # 18 tests in a real browser
 ```
 
-Unit tests cover the pricing engine, the shared schemas, password hashing, the
-persistence-to-contract mapper and the React components. Integration tests
-drive the running application over HTTP with supertest: registration, sign-in,
-session handling, quote creation, ownership and the administrator views.
+Unit tests cover the pricing engine, the amortisation schedule, the shared
+schemas, password hashing, the persistence-to-contract mapper and the React
+components. Integration tests drive the running API over HTTP with supertest:
+registration, sign-in, session handling, quote creation, ownership and the
+administrator views.
+
+Browser tests drive the whole stack with Playwright, at desktop and phone
+widths, covering registration through to a priced quote and its schedule, and
+the access-control boundaries. `pnpm test:browser` starts the Compose stack
+first and waits for it.
 
 The integration suite runs against its own database, whose data lives in
 memory, so a test run cannot touch development data. It applies the committed
@@ -124,6 +132,8 @@ monthly payment rather than a division by zero.
 **An interactive OpenAPI page** at `/api/docs`, generated from the same Zod
 schemas that validate requests.
 
+**Browser tests** with Playwright, run at two viewport widths.
+
 **An amortisation schedule.** Each offer links to its instalment-by-instalment
 breakdown, showing how much of every payment is interest, how much reduces the
 balance, and what is still owed. Because the monthly payment is rounded to
@@ -157,6 +167,7 @@ apps/web              Next.js app
   src/components      forms, tables, UI primitives
   src/lib             server-side API client and session helpers
 packages/contracts    Zod schemas, response types, money helpers
+e2e                   Playwright tests that drive the running stack
 ```
 
 ## Design decisions
@@ -243,14 +254,12 @@ production.
 ## What I would do next
 
 1. Refresh token rotation, and rate limiting on the authentication endpoints.
-2. An end-to-end browser test with Playwright covering sign-in, quote creation
-   and viewing the result.
-3. A PDF export of a quote and its schedule, for the customer to keep.
-4. Pagination controls on the personal quote list, which currently fetches up
+2. A PDF export of a quote and its schedule, for the customer to keep.
+3. Pagination controls on the personal quote list, which currently fetches up
    to fifty.
-5. Structured audit events for quote creation, which a lender needs for
+4. Structured audit events for quote creation, which a lender needs for
    compliance rather than for debugging.
-6. An identity provider. The token verification sits behind the Passport
+5. An identity provider. The token verification sits behind the Passport
    strategy, so adding Keycloak means swapping the JWT strategy for one that
    validates against the realm's JWKS endpoint, mapping the subject onto a
    local user row and realm roles onto the application role. Nothing outside
@@ -268,8 +277,8 @@ here.
 
 **How.** The workflow in `.github/workflows/ci.yml` runs three jobs on every
 pull request: lint, types, formatting and unit tests without a database;
-integration tests against a real Postgres service container; and a build of
-both production images. A deployment workflow would extend it on `main` by
+integration tests against a real Postgres service container; browser tests
+against the Compose stack; and a build of both production images. A deployment workflow would extend it on `main` by
 pushing the images to Artifact Registry tagged with the commit, running
 migrations as a Cloud Run job, then deploying a new revision with traffic
 shifted gradually and rolled back automatically on health-check failure.

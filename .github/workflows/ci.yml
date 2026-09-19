@@ -119,3 +119,41 @@ jobs:
           push: false
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max
+
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install the browser
+        run: pnpm --filter @cloover/e2e exec playwright install --with-deps chromium
+
+      # Exercises the same images CI builds, against a real database, the way
+      # a reviewer runs the project locally.
+      - name: Start the stack
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait
+
+      - run: pnpm --filter @cloover/e2e test:browser
+
+      - name: Collect container logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7

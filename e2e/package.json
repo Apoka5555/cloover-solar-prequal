@@ -1,0 +1,19 @@
+{
+  "name": "@cloover/e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser tests that drive the running stack end to end.",
+  "type": "module",
+  "scripts": {
+    "test:browser": "playwright test",
+    "test:browser:ui": "playwright test --ui",
+    "lint": "oxlint specs/",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.10.1",
+    "oxlint": "^1.58.0",
+    "typescript": "6.0.3"
+  }
+}
